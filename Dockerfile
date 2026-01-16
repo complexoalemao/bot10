@@ -11,13 +11,20 @@ WORKDIR /app
 # 3️⃣ Copia todos os arquivos do projeto para o container
 COPY . .
 
-# 4️⃣ Instala extensões PHP necessárias (exemplo comum: curl, mbstring, etc.)
-#    Remova ou adicione extensões conforme seu bot precisar
-RUN docker-php-ext-install pcntl mbstring curl
+# 4️⃣ Instala dependências do sistema necessárias para extensões PHP
+# libonig-dev -> necessário para mbstring
+# libcurl4-openssl-dev -> necessário para curl
+# pkg-config -> necessário para detectar oniguruma
+RUN apt-get update && apt-get install -y \
+    libonig-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    && docker-php-ext-install pcntl mbstring curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# 5️⃣ Define a variável de ambiente para garantir que o PHP CLI não pause em caso de erro
+# 5️⃣ Define a variável de ambiente para evitar lentidão se Xdebug estiver ativo
 ENV PHP_CLI_DISABLE_XDEBUG=1
 
 # 6️⃣ Comando padrão para rodar o bot
-#    Se seu bot for CLI, ele vai rodar bot.php continuamente
 CMD ["php", "bot.php"]
